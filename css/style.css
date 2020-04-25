@@ -85,3 +85,9 @@ body {
 .goods-price::after {
     content: "$"
 }
+
+.goods-buy {
+    margin: 10px;
+    display: block;
+    float: right;
+}
