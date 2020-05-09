@@ -19,8 +19,7 @@ body {
 .header {
     padding: 20px;
     display: flex;
-    justify-content: end;
-
+    justify-content: space-between;
 }
 
 .cart-button {
@@ -90,4 +89,10 @@ body {
     margin: 10px;
     display: block;
     float: right;
+}
+
+
+
+.convert-button {
+
 }
