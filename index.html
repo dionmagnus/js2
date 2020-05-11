@@ -5,14 +5,42 @@
     <script src="js/script.js" defer></script>
     <link rel="stylesheet" href="css/style.css"/>
     <meta charset="utf-8"/>
-</head>
+    <meta name="viewport" content="widht=device-width,initial-scale=1">
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  </head>
 <body>
-  <header class="header">
-    <nav><a href="regtest.html">Регулярные выражения</a></nav>
-    <button class="cart-button" type="button">Корзина</button>
-  </header>
-  <main>
-    <div class="goods-list"></div>
-  </main>
+  <div id="app">
+    <header class="header">
+      <nav><a href="regtest.html">Регулярные выражения</a></nav>
+      <button class="btn cart-btn" type="button" v-on:click="onCart">Корзина</button>
+    </header>
+    <main id="mainApp" class="main">
+      <div class="search-wrp">
+        <input class="search-field" type="search" placeholder="Введите название товара..." v-model="searchText"/><button class="btn search-btn" v-on:click="onSearch">Искать</button>
+      </div>
+      <div class="cart-wrp" v-show="showBasket">
+        <h3>Корзина</h3>
+        <div class="cart-item" v-for="basketItem in basket.getProducts()">
+          {{ basketItem.productName }} - {{ basketItem.productQty }} шт.
+        </div>
+      </div>
+      <div>
+        <div v-if="filteredGoods.length" class="goods-list">
+          <div v-for="good in filteredGoods" class="goods-item clearfix">
+            <img class="goods-img" src="img/stub.png" v-bind:alt="good.product_name" width="300" height="200">
+            <button class="btn goods-buy-btn" v-on:click="onAddProduct" v-bind:data-id="good.id_product">Купить</button>
+            <h3 class="goods-title">{{ good.product_name }}</h3>
+            <p class="goods-price">{{ good.price }}</p>
+          </div>
+        </div>
+        <div v-else>
+          <h3 class="no-goods-header">Товары не найдены</h3>
+        </div>     
+      </div>
+      <div>
+        
+      </div>
+    </main>
+  </div>
 </body>
 </html>
