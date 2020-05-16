@@ -1,50 +1,11 @@
   const API_URL = 'https://raw.githubusercontent.com/GeekBrainsTutorial/online-store-api/master/responses';
 
-  
-  function makeGETRequest(url) {
-    return new Promise((resolve, reject) => {
-      let xhr;
-
-      if (window.XMLHttpRequest) {
-        xhr = new XMLHttpRequest();
-      } else if (window.ActiveXObject) {
-        xhr = new ActiveXObject("Microsoft.XMLHTTP");
-      }
-  
-      xhr.onreadystatechange = function () {
-        if (xhr.readyState === 4) {
-          //Для простоты считаем, что только HTTP 1.1 200 соответствует успеху
-          if (xhr.status == 200) {
-            resolve(xhr.responseText);
-          } else {
-            reject(xhr.status, xhr.statusText);
-          }
-        }
-      }
-  
-      xhr.open('GET', url, true);
-      xhr.send();
-    });
-  }
-
-
-
-
-
 
   class GoodsItem {
     constructor(id, title, price) {
       this.id = id;
       this.title = title;
       this.price = price;
-    }
-    render() {
-      return `<div class="goods-item clearfix">
-                <img class="goods-img" src="img/stub.png" alt="${this.title}_img" width="300" height="200">
-                <button class="goods-buy">Купить</button>
-                <h3 class="goods-title">${this.title}</h3>
-                <p class="goods-price">${this.price}</p>
-              </div>`;
     }
   }
 
@@ -62,16 +23,7 @@
           });
       })
       .then(() => this.render());
-      
-      /*
-      this.goods = [
-        { id: 1, title: 'Shirt', price: 150 },
-        { id: 2, title: 'Socks', price: 50 },
-        { id: 3, title: 'Jacket', price: 350 },
-        { id: 4, title: 'Shoes', price: 250 },
-      ];
-      */
-    }
+    } 
     
     render() {
       let listHtml = '';
@@ -91,11 +43,23 @@
     }
   }
 
-  const goodList = new GoodsList();
-  goodList.fetchGoods();
-  //goodList.render();
-  //console.log(goodList.getGoodsCost(), " - стоимость всех товаров на витрине");
-
+  /**
+   * Класс товара в корзине
+   */
+  class BasketItem {
+    /**
+      * @productId - id товара в корзине
+      * @productQty - кол-во единиц данного товара в корзине
+      * @productName - название товара
+      * @productPrize - цена товара
+      */
+    constructor(productId, productQty, productName, productPrize) {
+      this.productId = productId;
+      this.productQty = productQty;
+      this.productName = productName;
+      this.productPrize = productPrize;  
+    }
+  }
 
   /**
    * Класс корзины
@@ -112,8 +76,12 @@
      * @productQty integer - кол-во единиц добавляемого товара
      * 
      */
-    add(productId, productQty) {
-      this.basketItems.push(new BastetItem(productId, productQty));
+    add(productId, productQty, productName, productPrize) {
+      let basketItemArr = this.basketItems.filter((item) => item.productId == productId);
+      if (basketItemArr.length > 0)
+        basketItemArr[0].productQty += productQty;
+      else
+        this.basketItems.push(new BasketItem(productId, productQty, productName, productPrize));
     }
 
     /**
@@ -151,16 +119,68 @@
     }
   }
 
-  /**
-   * Класс товара в корзине
-   */
-  class BasketItem {
-    /**
-      * @productId - id товара в корзине
-      * @productQty - кол-во единиц данного товара в корзине
-      */
-    constructor(productId, productQty) {
-      this.productId = productId;
-      this.productQty = productQty;  
+  const mainApp = new Vue({
+    el: '#app',
+    data: {
+      filteredGoods: [],
+      goods: [],
+      searchText: '',
+      showBasket: false,
+      basket: new Basket(),  
+    },
+    methods: {
+      makeGETRequest(url) {
+        return new Promise((resolve, reject) => {
+          let xhr;
+    
+          if (window.XMLHttpRequest) {
+            xhr = new XMLHttpRequest();
+          } else if (window.ActiveXObject) {
+            xhr = new ActiveXObject("Microsoft.XMLHTTP");
+          }
+      
+          xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4) {
+              //Для простоты считаем, что только HTTP 1.1 200 соответствует успеху
+              if (xhr.status == 200) {
+                resolve(xhr.responseText);
+              } else {
+                reject(xhr.status, xhr.statusText);
+              }
+            }
+          }
+      
+          xhr.open('GET', url, true);
+          xhr.send();
+        });
+      },
+      fetchGETResponse(goodsJson) {
+        this.goods = JSON.parse(goodsJson); 
+        this.filteredGoods = this.goods;
+      },
+      onSearch() {
+        if (this.searchText != '') {
+          this.filteredGoods = this.goods.filter((item) => item.product_name.toLowerCase().includes(this.searchText.toLowerCase()));
+        } else
+          this.filteredGoods = this.goods;
+      },
+      onCart() {
+        this.showBasket = !this.showBasket;
+      },
+      onAddProduct(event) {
+        let id = parseInt(event.target.getAttribute("data-id"));
+        let good = this.goods.filter((item) => item.id_product == id)[0];
+        this.basket.add(id, 1, good.product_name, good.prize);
+
+        console.log(this.basket);
+      }
+    },
+    mounted() {      
+      this.makeGETRequest(`${API_URL}/catalogData.json`)
+      .then(this.fetchGETResponse);
     }
-  }
+
+
+
+
+  });
