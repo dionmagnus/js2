@@ -115,3 +115,8 @@ body {
     right: 0px;
     padding: 10px;
 }
+
+.cart-total-cost {
+    margin: 15px 0 15px 0;
+}
+

@@ -15,15 +15,17 @@
       <button class="btn cart-btn" type="button" v-on:click="onCart">Корзина</button>
     </header>
     <main id="mainApp" class="main">
-      <div class="search-wrp">
-        <input class="search-field" type="search" placeholder="Введите название товара..." v-model="searchText"/><button class="btn search-btn" v-on:click="onSearch">Искать</button>
-      </div>
-      <div class="cart-wrp" v-show="showBasket">
-        <h3>Корзина</h3>
-        <div class="cart-item" v-for="basketItem in basket.getProducts()">
-          {{ basketItem.productName }} - {{ basketItem.productQty }} шт.
-        </div>
-      </div>
+      <search
+        v-model="searchText"
+        v-on:do-search="onSearch"
+      ></search>
+      
+      <basket
+        v-show="showBasket"
+        v-bind:basket="basket"
+        v-on:do-clear-basket="onClearBasket"
+      ></basket>
+      
       <div>
         <div v-if="filteredGoods.length" class="goods-list">
           <div v-for="good in filteredGoods" class="goods-item clearfix">
