@@ -1,4 +1,4 @@
-  const API_URL = 'https://raw.githubusercontent.com/GeekBrainsTutorial/online-store-api/master/responses';
+  const API_URL = 'http://localhost:3000';
 
 
   class GoodsItem {
@@ -15,7 +15,7 @@
     }
     
     fetchGoods() {
-      makeGETRequest(`${API_URL}/catalogData.json`)
+      makeGETRequest(`${API_URL}/catalog`)
       .then((goodsJson) => {
           return new Promise((resolve, reject) => {
             this.goods = JSON.parse(goodsJson);
@@ -69,6 +69,22 @@
       this.basketItems = [];
     }
 
+    /**
+     * Сохранят корзину в json формат
+     * @returns string - json представление корзины
+     */
+    serializeToJson() {
+      return JSON.stringify(this.basketItems);
+    }
+    
+    /**
+     * Восстанавливает корзину из строки json
+     * 
+     * @json string - json представление корзины
+     */
+    unSerializeFromJson(json) {
+      this.basketItems = JSON.parse(json);
+    }
     /**
      * Добавляет товар в корзину
      *
@@ -146,7 +162,8 @@
       <h3>Корзина</h3>
       <div v-if="basket.getProducts().length">
           <div class="cart-item" v-for="basketItem in basket.getProducts()">
-            {{ basketItem.productName }} - {{ basketItem.productQty }} шт.
+            <div class="cart-item-content">{{ basketItem.productName }} - {{ basketItem.productQty }} шт.</div>
+            <button class="btn product-delete-btn" v-on:click="$emit('do-remove-item', basketItem.productId)">Удалить</button>
           </div>
           <hr>
           <div class="cart-total-cost">
@@ -171,7 +188,7 @@
       basket: new Basket(),  
     },
     methods: {
-      makeGETRequest(url) {
+      makeHTTPRequest(method, url, data = null) {
         return new Promise((resolve, reject) => {
           let xhr;
     
@@ -192,13 +209,18 @@
             }
           }
       
-          xhr.open('GET', url, true);
-          xhr.send();
+          xhr.open(method, url, true);
+          if (method == "POST")
+              xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+          xhr.send(data);
         });
       },
       fetchGETResponse(goodsJson) {
         this.goods = JSON.parse(goodsJson); 
         this.filteredGoods = this.goods;
+      },
+      fetchGETBasket(basketJson) {
+        this.basket.unSerializeFromJson(basketJson);
       },
       onSearch() {
         if (this.searchText != '') {
@@ -211,17 +233,29 @@
       },
       onClearBasket() {
         this.basket.clear();
+        this.saveBasket();
       },
-
+      onRemoveBasketItem(productId) {
+        this.basket.remove(productId);
+        this.saveBasket();
+      },
       onAddProduct(event) {
         let id = parseInt(event.target.getAttribute("data-id"));
         let good = this.goods.filter((item) => item.id_product == id)[0];
         this.basket.add(id, 1, good.product_name, good.price);
+        this.saveBasket();
+      },
+      saveBasket() {
+        this.makeHTTPRequest("POST", `${API_URL}/basket`, this.basket.serializeToJson())
+        .then(console.log);
       }
     },
     
     mounted() {      
-      this.makeGETRequest(`${API_URL}/catalogData.json`)
+      this.makeHTTPRequest('GET', `${API_URL}/catalog`)
       .then(this.fetchGETResponse);
-    }
+
+      this.makeHTTPRequest('GET', `${API_URL}/basket`)
+      .then(this.fetchGETBasket);
+    }  
   });
