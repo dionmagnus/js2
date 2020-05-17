@@ -51,13 +51,13 @@
       * @productId - id товара в корзине
       * @productQty - кол-во единиц данного товара в корзине
       * @productName - название товара
-      * @productPrize - цена товара
+      * @productPrice - цена товара
       */
-    constructor(productId, productQty, productName, productPrize) {
+    constructor(productId, productQty, productName, productPrice) {
       this.productId = productId;
       this.productQty = productQty;
       this.productName = productName;
-      this.productPrize = productPrize;  
+      this.productPrice = productPrice;  
     }
   }
 
@@ -76,12 +76,12 @@
      * @productQty integer - кол-во единиц добавляемого товара
      * 
      */
-    add(productId, productQty, productName, productPrize) {
+    add(productId, productQty, productName, productPrice) {
       let basketItemArr = this.basketItems.filter((item) => item.productId == productId);
       if (basketItemArr.length > 0)
         basketItemArr[0].productQty += productQty;
       else
-        this.basketItems.push(new BasketItem(productId, productQty, productName, productPrize));
+        this.basketItems.push(new BasketItem(productId, productQty, productName, productPrice));
     }
 
     /**
@@ -95,11 +95,18 @@
     }
 
     /**
+     * Удаляет все покупки из корзины
+     */
+    clear() {
+      this.basketItems = [];
+    }
+    
+    /**
      * Возвращает стоимость товаров в корзине
      * @returns number - стоимоть всех товаров в корзине
      */
     getProductsCost() {
-      return this.basketItems.map(item => item.price).reduce((acc, item) => acc + item);
+      return this.basketItems.map(item => item.productQty * item.productPrice).reduce((acc, item) => acc + item);
     }
 
     /**
@@ -118,6 +125,41 @@
       return this.basketItems;
     }
   }
+
+  Vue.component('search', {
+    props: ['value'],
+    template: `
+    <div class="search-wrp">
+      <input class="search-field" type="search"
+        placeholder="Введите название товара..."
+        v-bind:value="value"
+        v-on:input="$emit('input', $event.target.value)"
+      /><button class="btn search-btn" v-on:click="$emit('do-search')">Искать</button>  
+    </div>
+   `
+  });
+
+  Vue.component('basket', {
+    props: ['basket'],
+    template: `
+    <div class="cart-wrp">
+      <h3>Корзина</h3>
+      <div v-if="basket.getProducts().length">
+          <div class="cart-item" v-for="basketItem in basket.getProducts()">
+            {{ basketItem.productName }} - {{ basketItem.productQty }} шт.
+          </div>
+          <hr>
+          <div class="cart-total-cost">
+            Итого: {{ basket.getProductsCost() }}$
+          </div>
+          <button class="btn clear-basket-btn" v-on:click="$emit('do-clear-basket')">Очистить корзину</button>
+      </div>
+      <div v-else>
+        Корзина пустая
+      </div>
+    </div>
+    `
+  });
 
   const mainApp = new Vue({
     el: '#app',
@@ -167,20 +209,19 @@
       onCart() {
         this.showBasket = !this.showBasket;
       },
+      onClearBasket() {
+        this.basket.clear();
+      },
+
       onAddProduct(event) {
         let id = parseInt(event.target.getAttribute("data-id"));
         let good = this.goods.filter((item) => item.id_product == id)[0];
-        this.basket.add(id, 1, good.product_name, good.prize);
-
-        console.log(this.basket);
+        this.basket.add(id, 1, good.product_name, good.price);
       }
     },
+    
     mounted() {      
       this.makeGETRequest(`${API_URL}/catalogData.json`)
       .then(this.fetchGETResponse);
     }
-
-
-
-
   });
