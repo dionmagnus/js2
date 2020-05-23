@@ -116,6 +116,12 @@ body {
     padding: 10px;
 }
 
+.cart-item {
+    margin: 10px 0 10px 0;
+    display: flex;
+    justify-content: space-between;
+}
+
 .cart-total-cost {
     margin: 15px 0 15px 0;
 }
